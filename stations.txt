@@ -1,0 +1,143 @@
+ //18th | 40830 |'Pink',| '' |false
+ //35th-Bronzeville-IIT | 41120 |'G',| '' |false
+ //35th/Archer  | 40120 |'Org',| '' |false
+ //43rd | 41270 |'G',| '' |false
+ //47th (Green Line)    | 41080 |'G',| '' |false
+ //47th (Red Line)  | 41230 |'Red',| '' |false
+ //51st | 40130 |'G',| '' |false
+ //54th/Cermak  | 40580 ||false
+ //63rd | 40910 |'Red',| '' |false
+ //69th | 40990 |'Red',| '' |false
+ //79th | 40240 |'Red',| '' |false
+ //87th | 41430 |'Red',| '' |false
+ //95th | 40450 |'Red',| '' |false
+ //Adams/Wabash | 40680 |'Pink','Brn','P','G','Org'| '' |true
+ //Addison (Blue Line)  | 41240 |'Blue',| '' |false
+ //Addison (Brown Line) | 41440 |'Brn',| '' |false
+ //Addison (Red Line)   | 41420 |'P','Red',| '' |false
+ //Argyle   | 41200 |'Red',| '' |false
+ //Armitage | 40660 |'Brn','P',| '' |false
+ //Ashland/63rd | 40290 |'G',| '' |false
+ //Ashland (Green, Pink Lines)  | 40170 |'Pink','G',| '' |false
+ //Ashland (Orange Line)    | 41060 |'Org',| '' |false
+ //Austin (Blue Line)   | 40010 |'Blue',| '' |false
+ //Austin (Green Line)  | 41260 |'G',| '' |false
+ //Belmont (Red, Brown, Purple Lines)   | 41320 |'Brn','P','Red',| '' |false
+ //Belmont (Blue Line)  | 40060 |'Blue',| '' |false
+ //Berwyn   | 40340 |'Red',| '' |false
+ //Bryn Mawr    | 41380 |'Red',| '' |false
+ //California (Pink Line)   | 40440 |'Pink',| '' |false
+ //California (Green Line)  | 41360 |'G',| '' |false
+ //California (Blue Line-O'Hare Branch) | 40570 |'Blue',| '' |false
+ //Central Park | 40780 |'Pink',| '' |false
+ //Central (Green Line) | 40280 |'G',| '' |false
+ //Central (Purple Line)    | 41250 |'P',| '' |false
+ //Cermak-Chinatown | 41000 |'Red',| '' |false
+ //Cermak-McCormick Place   | 41690 |'G',| '' |false
+ //Chicago (Blue Line)  | 41410 |'Blue',| '' |false
+ //Chicago (Brown Line) | 40710 |'Brn','P',| '' |false
+ //Chicago (Red Line)   | 41450 |'Red',| '' |false
+ //Cicero (Pink Line)   | 40420 |'Pink',| '' |false
+ //Cicero (Blue Line-Forest Park Branch)    | 40970 |'Blue',| '' |false
+ //Cicero (Green Line)  | 40480 |'G',| '' |false
+ //Clark/Division   | 40630 |'Red',| '' |false
+ //Clark/Lake   | 40380 |'Pink','Blue','Brn','P','G','Org',| '' |true
+ //Clinton (Blue Line)  | 40430 |'Blue',| '' |false
+ //Clinton (Green Line) | 41160 |'Pink','G',| '' |false
+ //Conservatory | 41670 |'G',| '' |false
+ //Cumberland   | 40230 |'Blue',| '' |false
+ //Damen (Brown Line)   | 40090 |'Brn',| '' |false
+ //Damen (Pink Line)    | 40210 |'Pink',| '' |false
+ //Damen (Blue Line-O'Hare Branch)  | 40590 |'Blue',| '' |false
+ //Davis    | 40050 |'P',| '' |false
+ //Dempster | 40690 |'P',| '' |false
+ //Dempster-Skokie  | 40140 |'Y',| '' |false
+ //Diversey | 40530 |'Brn','P',| '' |false
+ //Division | 40320 |'Blue',| '' |false
+ //Cottage Grove    | 40720 |'G',| '' |false
+ //Forest Park  | 40390 |'Blue',| '' |false
+ //Foster   | 40520 |'P',| '' |false
+ //Francisco    | 40870 |'Brn',| '' |false
+ //Fullerton    | 41220 |'Brn','P','Red',| '' |false
+ //Garfield (Green Line)    | 40510 |'G',| '' |false
+ //Garfield (Red Line)  | 41170 |'Red',| '' |false
+ //Grand (Blue Line)    | 40490 |'Blue',| '' |false
+ //Grand (Red Line) | 40330 |'Red',| '' |false
+ //Granville    | 40760 |'Red',| '' |false
+ //Halsted (Green Line) | 40940 |'G',| '' |false
+ //Halsted (Orange Line)    | 41130 |'Org',| '' |false
+ //Harlem (Blue Line-Forest Park Branch)    | 40980 |'Blue',| '' |false
+ //Harlem (Green Line)  | 40020 |'G',| '' |false
+ //Harlem (Blue Line-O'Hare Branch) | 40750 |'Blue',| '' |false
+ //Harold Washington Library-State/Van Buren    | 40850 |'Pink','Brn','P','Org',| '' |true
+ //Harrison | 41490 |'Red',| '' |false
+ //Howard   | 40900 |'P','Red','Y',| '' |false
+ //Illinois Medical District    | 40810 |'Blue',| '' |false
+ //Indiana  | 40300 |'G',| '' |false
+ //Irving Park (Blue Line)  | 40550 |'Blue',| '' |false
+ //Irving Park (Brown Line) | 41460 |'Brn',| '' |false
+ //Jackson (Blue Line)  | 40070 |'Blue',| '' |false
+ //Jackson (Red Line)   | 40560 |'Red',| '' |false
+ //Jarvis   | 41190 |'Red',| '' |false
+ //Jefferson Park   | 41280 |'Blue',| '' |false
+ //Kedzie (Brown Line)  | 41180 |'Brn',| '' |false
+ //Kedzie (Pink Line)   | 41040 |'Pink',| '' |false
+ //Kedzie (Green Line)  | 41070 |'G',| '' |false
+ //Kedzie-Homan (Blue Line) | 40250 |'Blue',| '' |false
+ //Kedzie (Orange Line) | 41150 |'Org',| '' |false
+ //Kimball  | 41290 |'Brn',| '' |false
+ //King Drive   | 41140 |'G',| '' |false
+ //Kostner  | 40600 |'Pink',| '' |false
+ //Lake | 41660 |'Red',| '' |false
+ //Laramie  | 40700 |'G',| '' |false
+ //LaSalle  | 41340 |'Blue',| '' |false
+ //LaSalle/Van Buren    | 40160 |'Pink','Brn','P','Org',| '' |true
+ //Lawrence | 40770 |'Red',| '' |false
+ //Linden   | 41050 |'P',| '' |false
+ //Logan Square | 41020 |'Blue',| '' |false
+ //Loyola   | 41300 |'Red',| '' |false
+ //Main | 40270 |'P',| '' |false
+ //Midway   | 40930 |'Org',| '' |false
+ //Monroe (Blue Line)   | 40790 |'Blue',| '' |false
+ //Monroe (Red Line)    | 41090 |'Red',| '' |false
+ //Montrose (Blue Line) | 41330 |'Blue',| '' |false
+ //Montrose (Brown Line)    | 41500 |'Brn',| '' |false
+ //Morgan   | 41510 |'Pink','G',| '' |false
+ //Morse    | 40100 |'Red',| '' |false
+ //North/Clybourn   | 40650 |'Red','Red',| '' |false
+ //Noyes    | 40400 |'P',| '' |false
+ //Oak Park (Blue Line) | 40180 |'Blue',| '' |false
+ //Oak Park (Green Line)    | 41350 |'G',| '' |false
+ //Oakton-Skokie    | 41680 |'Y',| '' |false
+ //O'Hare   | 40890 |'Pink','Blue',| '' |false
+ //Paulina  | 41310 |'Brn',| '' |false
+ //Polk | 41030 |'Pink',| '' |false
+ //Pulaski (Pink Line)  | 40150 |'Pink',| '' |false
+ //Pulaski (Blue Line-Forest Park Branch)   | 40920 |'Blue',| '' |false
+ //Pulaski (Green Line) | 40030 |'G',| '' |false
+ //Pulaski (Orange Line)    | 40960 |'Org',| '' |false
+ //Quincy/Wells | 40040 |'Pink','Brn','P','Org',| '' |true
+ //Racine   | 40470 |'Blue',| '' |false
+ //Randolph/Wabash  | 40200 |'Pink','Brn','P','G','Org',| '' |true
+ //Ridgeland    | 40610 |'G',| '' |false
+ //Rockwell | 41010 |'Brn',| '' |false
+ //Roosevelt    | 41400 |'G','Org','Red',| '' |false
+ //Rosemont | 40820 |'Blue',| '' |false
+ //Sedgwick | 40800 |'Brn','P',| '' |false
+ //Sheridan | 40080 |'P','Red',| '' |false
+ //South Boulevard  | 40840 |'P',| '' |false
+ //Southport    | 40360 |'Brn',| '' |false
+ //Sox-35th | 40190 |'Red',| '' |false
+ //State/Lake   | 40260 |'Pink','Brn','P','G','Org',| '' |true
+ //Thorndale    | 40880 |'Red',| '' |false
+ //UIC-Halsted  | 40350 |'Blue',| '' |false
+ //Washington/Wells | 40730 |'Pink','Brn','P','Org',| '' |true
+ //Washington (Blue Line)   | 40370 |'Blue',| '' |false
+ //Wellington   | 41210 |'Brn','P',| '' |false
+ //Western (Brown Line) | 41480 |'Brn', |false
+ //Western (Pink Line) | 40740 |'Pink',|false
+ //Western (Blue Line-Forest Park Branch) | 40220 |'Blue',| '' |false
+ //Western (Blue Line-O'Hare Branch)    | 40670 |'Blue',| '' |false
+ //Western (Orange Line)    | 40310 |'Org',| '' |false
+ //Wilson   | 40540 |'P','Red',  '' ||false
+ //Merchandise Mart| 40460 |'Brn','P',|false
