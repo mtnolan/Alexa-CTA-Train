@@ -63,8 +63,7 @@ TrainTrackerSkill.prototype.intentHandlers = {
  *  SetHomeStationByName Intent
  *  Intent for setting a user's home station and line using the station's ID.
  */
-function handleSetHomeStationIntent(intent, session, alexaCallback) {
-	console.log(intent);
+function handleSetHomeStationIntent(intent, session, alexa) {
 	var homeStation = intent.slots.StopId;
 	var line = intent.slots.Line;
 	var params = {
@@ -79,7 +78,7 @@ function handleSetHomeStationIntent(intent, session, alexaCallback) {
 	dynamodb.getItem(params, function(err, data) {
 		if (err) {
 			console.log('Failed to get user profile: ' + err);
-			alexaCallback({}, buildSpeechletResponse("CTA Train", "Something went wrong!  Please try again!", "Something went Wrong!", true));
+			errorHappenedResponse(alexa);
 		} else {
 			console.log("User - " + JSON.stringify(userId) + " HomeStation - " + JSON.stringify(homeStation) + ' Line - ' + JSON.stringify(line));
 
@@ -94,8 +93,6 @@ function handleSetHomeStationIntent(intent, session, alexaCallback) {
  *  Intent for setting a user's home station and line using the station's name.
  */
 function handleSetHomeStationByNameIntent(intent, session, alexa) {
-	console.log(JSON.stringify(intent));
-	console.log('session - ' + JSON.stringify(session));
 	var homeStation = intent.slots.Station.value;
 	line = intent.slots.Line;
 	userId = getUserId(session);
@@ -112,7 +109,7 @@ function handleSetHomeStationByNameIntent(intent, session, alexa) {
 			speech: speechText,
 			type: AlexaSkill.speechOutputType.PLAIN_TEXT
 		};
-		console.log('none found');
+		console.log('No stations found - ' + homeStation);
 		console.log(response);
 		alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
 		return;
@@ -150,7 +147,6 @@ function handleSetHomeStationByNameIntent(intent, session, alexa) {
 		alexa.askWithCard(speechOutput, repromptOutput, "CTA Train Tracker", cardText);
 		return;
 	} else {
-		console.log('one found');
 		matchingStation = matchingStations[0];
 	}
 
@@ -262,23 +258,29 @@ function handleGetTrainIntent(intent, session, alexa) {
 
 			parse(body, function(err, result) {
 				if (err != null) {
-					console.log(err);
-					alexa({}, buildSpeechletResponse("Error", "Failed to parse CTA response.", "What train?", true));
+					console.log('Failed to parse CTA response - ' + err);
+					errorHappenedResponse(alexa);
 				} else {
-					console.log(result.ctatt);
+					console.log('CTA response - ' + result.ctatt);
 					if (result.ctatt.errCd[0] != '0') {
-						console.log('Error code: ' + result.ctatt.errCd[0]);
 						if (result.ctatt.errCd[0] === '103') {
-							alexa({}, buildSpeechletResponse("Error", "Invalid home station.  Please reset your Home station.", "What train?", true));
+							var cardText = 'Invalid home station.  Please reset your Home station.';
+							var speechText = 'Invalid home station.  Please reset your Home station.';
+
+							var speechOutput = {
+								speech: speechText,
+								type: AlexaSkill.speechOutputType.PLAIN_TEXT
+							};
+
+							alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
 						}
-						alexa({}, buildSpeechletResponse("Error", result.ctatt.errNm[0], "What train?", true));
+						errorHappenedResponse(alexa);
 					} else {
 						if (typeof result === 'undefined' || typeof result.ctatt.eta === 'undefined') {
 							noTrainsResponse(intent.slots.Destination.value, lineCode, alexa);
 							return;
 						}
-
-						console.log(JSON.stringify(result));
+						
 						var trainList = processTrainArrivals(result.ctatt.eta, intent.slots.Destination.value, destinationCode, lineCode, alexa);
 
 						if (trainList.length === 0) {
@@ -333,9 +335,12 @@ function handleGetHomeStation(intent, session, alexa) {
 	});
 }
 
+/*
+ * SetHomeStationLineRepropt Intent
+ * Intent for asking the user for a line to specify which 
+ * station they want to set for a home station.
+ */
 function handleSetHomeStationLineReprompt(intent, session, alexa) {
-	console.log('Handle Set home station line - ' + JSON.stringify(session));
-
 	if (session.new) {
 		//Some error here
 	}
@@ -343,7 +348,6 @@ function handleSetHomeStationLineReprompt(intent, session, alexa) {
 	userId = getUserId(session);
 	previousMatchingStations = session.attributes.matchingStations;
 	if (sessionType === 'PickLine') {
-		console.log('PickLine');
 		var line = intent.slots.LineOrBlueSide;
 
 		if (!line.value) {
@@ -358,12 +362,14 @@ function handleSetHomeStationLineReprompt(intent, session, alexa) {
 
 		processHomeStationLineReprompt(userId, previousMatchingStations, lineCode, alexa)
 	} else if (sessionType === 'BlueMatching') {
-		console.log('BlueMatching');
 		var blueSide = intent.slots.LineOrBlueSide.value;
 		processHomeStationBlueReprompt(userId, previousMatchingStations, blueSide, alexa);
 	}
 }
 
+/*
+ * Processing method for handling a user specifying a train line when prompted 
+ */
 function processHomeStationLineReprompt(userId, previousMatchingStations, lineCode, alexa) {
 	var matchingStations = [];
 	for (var key in previousMatchingStations) {
@@ -375,7 +381,7 @@ function processHomeStationLineReprompt(userId, previousMatchingStations, lineCo
 	}
 
 	if (matchingStations.length > 1) {
-		//Something here
+		//TODO: Something here
 	} else if (matchingStations.length === 0) {
 		var lineName = getLineName(lineCode);
 		cardText = 'The ' + lineName + ' does not run at this station.';
@@ -394,11 +400,14 @@ function processHomeStationLineReprompt(userId, previousMatchingStations, lineCo
 	}
 }
 
+/*
+ * Processing method for handling a user specifying O'Hare or Forest park side line.
+ * Method only used for multiple stations with the same name on the blue line (Harlem, Western)
+ */
 function processHomeStationBlueReprompt(userId, previousMatchingStations, blueSide, alexa) {
 	//Handles O'Hare or Forest Park
 	for (var key in previousMatchingStations) {
 		var station = previousMatchingStations[key];
-		console.log('station - ' + JSON.stringify(station));
 
 		if (station.blueLineSide === blueSide) {
 			putUserProfile(userId, station.stationId, 'Blue', alexa, function(response) {
@@ -493,6 +502,9 @@ function noTrainsResponse(destination, lineCode, alexa) {
 	alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
 }
 
+/*
+ * Sends response after setting a user's home station
+ */
 function setHomeStationResponse(response, matchingStation, lineCode, alexa) {
 
 	if (lineCode) {
@@ -512,6 +524,9 @@ function setHomeStationResponse(response, matchingStation, lineCode, alexa) {
 	alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
 }
 
+/*
+ * Helper method to get user id from session
+ */
 function getUserId(session) {
 	return session.user.userId;
 }
@@ -568,6 +583,9 @@ function getLineCode(line) {
 	console.log('Could not find line - ' + line.toString().toUpperCase());
 }
 
+/*
+ * Gets line destinations from line codes
+ */
 function getLineDestinationsString(lineCode) {
 	switch (lineCode) {
 		case "Red":
@@ -603,18 +621,19 @@ function getUserProfile(userId, failureFunction, successFunction) {
 	};
 
 	dynamodb.getItem(params, function(err, data) {
-		console.log('got profile');
 		if (err) {
-			console.log('Failure');
 			console.log('Failed to get user profile: ' + err);
 			failureFunction();
 		} else {
-			console.log('Success');
+			console.log('Successfully got user profile');
 			successFunction(data);
 		}
 	});
 }
 
+/*
+ * Helper method to put a user profile to dynamo
+ */
 function putUserProfile(userId, homeStationId, lineCode, alexa, continueFunction) {
 	var createParams;
 	console.log('Setting user profile.  UserId - ' + userId + ' HomeStationId - ' + homeStationId + ' Line- ' + lineCode);
@@ -635,16 +654,10 @@ function putUserProfile(userId, homeStationId, lineCode, alexa, continueFunction
 
 	dynamodb.putItem(createParams, function(err, data) {
 		if (err != null) {
-			console.log(err);
-			var cardText = 'Something went wrong...  Please try agian.';
-			var speechText = 'Something seems to have gone wrong setting your home Station.  Please try agian.';
-			var speechOutput = {
-				speech: speechText,
-				type: AlexaSkill.speechOutputType.PLAIN_TEXT
-			};
-			alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
+			console.log('Error put user profile - ' + err);
+			errorHappenedResponse(alexa);
 		} else {
-			console.log('Put Success - ' + JSON.stringify(data));
+			console.log('Put user profile success - ' + JSON.stringify(data));
 			continueFunction(data);
 		}
 	});
@@ -676,8 +689,6 @@ function getAlexaFriendlyDestination(destination) {
 	}
 }
 
-
-
 /*
  * Called when the user ends the session.
  * Is not called when the skill returns shouldEndSession=true.
@@ -687,36 +698,6 @@ function onSessionEnded(sessionEndedRequest, session) {
 		", sessionId=" + session.sessionId);
 	// Add cleanup logic here
 }
-
-// --------------- Functions that control the skill's behavior -----------------------
-
-function getColorFromSession(intent, session, callback) {
-	var favoriteColor;
-	var repromptText = null;
-	var sessionAttributes = {};
-	var shouldEndSession = false;
-	var speechOutput = "";
-
-	if (session.attributes) {
-		favoriteColor = session.attributes.favoriteColor;
-	}
-
-	if (favoriteColor) {
-		speechOutput = "Your favorite color is " + favoriteColor + ". Goodbye.";
-		shouldEndSession = true;
-	} else {
-		speechOutput = "I'm not sure what your favorite color is, you can say, my favorite color " +
-			" is red";
-	}
-
-	// Setting repromptText to null signifies that we do not want to reprompt the user.
-	// If the user does not respond or says something that is not understood, the session
-	// will end.
-	callback(sessionAttributes,
-		buildSpeechletResponse(intent.name, speechOutput, repromptText, shouldEndSession));
-}
-
-// --------------- Helpers that build all of the responses -----------------------
 
 function errorHappenedResponse(alexa) {
 	var cardText = "Something went wrong...  Please try again.";
