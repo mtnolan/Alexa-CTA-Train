@@ -336,7 +336,6 @@ function handleGetHomeStation(intent, session, alexa) {
 function handleSetHomeStationLineReprompt(intent, session, alexa) {
 	console.log('Handle Set home station line - ' + JSON.stringify(session));
 
-	console.log(JSON.stringify(intent));
 	if (session.new) {
 		//Some error here
 	}
@@ -360,7 +359,7 @@ function handleSetHomeStationLineReprompt(intent, session, alexa) {
 		processHomeStationLineReprompt(userId, previousMatchingStations, lineCode, alexa)
 	} else if (sessionType === 'BlueMatching') {
 		console.log('BlueMatching');
-		var blueSide = session.attributes.LineOrBlueSide;
+		var blueSide = intent.slots.LineOrBlueSide.value;
 		processHomeStationBlueReprompt(userId, previousMatchingStations, blueSide, alexa);
 	}
 }
@@ -396,12 +395,11 @@ function processHomeStationLineReprompt(userId, previousMatchingStations, lineCo
 }
 
 function processHomeStationBlueReprompt(userId, previousMatchingStations, blueSide, alexa) {
-	console.log('BlueReprompt');
-
-	console.log(JSON.stringify(previousMatchingStations));
 	//Handles O'Hare or Forest Park
-	for (var station in previousMatchingStations) {
-		console.log(station.blueLineSide + '===' + blueSide);
+	for (var key in previousMatchingStations) {
+		var station = previousMatchingStations[key];
+		console.log('station - ' + JSON.stringify(station));
+
 		if (station.blueLineSide === blueSide) {
 			putUserProfile(userId, station.stationId, 'Blue', alexa, function(response) {
 				setHomeStationResponse(response, station, 'Blue', alexa);
