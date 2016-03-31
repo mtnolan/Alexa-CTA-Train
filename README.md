@@ -179,7 +179,7 @@
 			</li>
 			<li>"Midway" bound
 				<ul>
-					<li>54th and Cermak/li>
+					<li>54th and Cermak</li>
 					<li>54th/li>
 					<li>Out-bound</li>
 					<li>West-bound</li>
