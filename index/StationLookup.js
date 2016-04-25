@@ -4,43 +4,43 @@ function StationLookup() {
 
 	console.log('Creating Station Lookup...');
 	//18th
-	Stations[40830] = new Station(40830, '18th Street', ['Pink'], ['Eighteenth', 'Eighteenth Street'], false, undefined);
+	Stations[40830] = new Station(40830, '18th Street', ['Pink'], ['Eighteenth', 'Eighteenth Street', '18th'], false, undefined);
 
 	//35th-Bronzeville-IIT
-	Stations[41120] = new Station(41120, '35th Street', ['G'], ['Thirty Fifth', 'Thirty Fifth and Archer', 'Thirty Fifth Street'], false, undefined);
+	Stations[41120] = new Station(41120, '35th Street', ['G'], ['Thirty Fifth', 'Thirty Fifth and Archer', 'Thirty Fifth Street', '35th'], false, undefined);
 
 	//35th/Archer
-	Stations[40120] = new Station(40120, '35th and Archer', ['Org'], ['Thirty Fifth', 'Bronzeville', 'IIT', 'Thirty Fifth Street'], false, undefined);
+	Stations[40120] = new Station(40120, '35th and Archer', ['Org'], ['Thirty Fifth', 'Bronzeville', 'IIT', 'Thirty Fifth Street', '35th'], false, undefined);
 
 	//43rd
-	Stations[41270] = new Station(41270, '43rd Street', ['G'], ['Fourty Thir,  Fourty Third Street'], false, undefined);
+	Stations[41270] = new Station(41270, '43rd Street', ['G'], ['Fourty Thir,  Fourty Third Street', '43rd'], false, undefined);
 
 	//47th (Green Line)
-	Stations[41080] = new Station(41080, '47th Street', ['G'], ['Fourty Seventh', 'Fourty Seventh Street'], false, undefined);
+	Stations[41080] = new Station(41080, '47th Street', ['G'], ['Fourty Seventh', 'Fourty Seventh Street', '47th'], false, undefined);
 
 	//47th (Red Line)
-	Stations[41230] = new Station(41230, '47th Street', ['Red'], ['Fourty Seventh', 'Fourty Seventh Street'], false, undefined);
+	Stations[41230] = new Station(41230, '47th Street', ['Red'], ['Fourty Seventh', 'Fourty Seventh Street', '47th'], false, undefined);
 
 	//51st
-	Stations[40130] = new Station(40130, '51st Street', ['G'], ['Fifty First', 'Fifty First Street'], false, undefined);
+	Stations[40130] = new Station(40130, '51st Street', ['G'], ['Fifty First', 'Fifty First Street', '51st'], false, undefined);
 
 	//54th/Cermak
-	Stations[40580] = new Station(40580, '54th and Cermak', ['Fifty Fourth and Cermak'], [false], false, undefined);
+	Stations[40580] = new Station(40580, '54th and Cermak', ['Fifty Fourth and Cermak', '54th'], [false], false, undefined);
 
 	//63rd
-	Stations[40910] = new Station(40910, '63rd Street', ['Red'], ['Sixty Third', 'Sixty Third Street'], false, undefined);
+	Stations[40910] = new Station(40910, '63rd Street', ['Red'], ['Sixty Third', 'Sixty Third Street', '63rd'], false, undefined);
 
 	//69th
-	Stations[40990] = new Station(40990, '69th Street', ['Red'], ['Sixty Nineth', 'Sixty Nineth Street'], false, undefined);
+	Stations[40990] = new Station(40990, '69th Street', ['Red'], ['Sixty Nineth', 'Sixty Nineth Street', '69th'], false, undefined);
 
 	//79th
-	Stations[40240] = new Station(40240, '79th Street', ['Red'], ['Seventy Nineth', 'Seventy Nineth Street'], false, undefined);
+	Stations[40240] = new Station(40240, '79th Street', ['Red'], ['Seventy Nineth', 'Seventy Nineth Street', '79th'], false, undefined);
 
 	//87th
-	Stations[41430] = new Station(41430, '87th Street', ['Red'], ['Eighty Seventh', 'Eighty Seventh Street'], false, undefined);
+	Stations[41430] = new Station(41430, '87th Street', ['Red'], ['Eighty Seventh', 'Eighty Seventh Street', '87th'], false, undefined);
 
 	//95th
-	Stations[40450] = new Station(40450, '95th Street', ['Red'], ['Ninety Fifth', 'Ninety Fifth Street'], false, undefined);
+	Stations[40450] = new Station(40450, '95th Street', ['Red'], ['Ninety Fifth', 'Ninety Fifth Street', '95th'], false, undefined);
 
 	//Adams/Wabash
 	Stations[40680] = new Station(40680, 'Adams and Wabash', ['Pink', 'Brn', 'P', 'G', 'Org'], ['Adams and Wabash', 'Wabash and Adams'], false, undefined);
@@ -391,7 +391,7 @@ function StationLookup() {
 	Stations[40360] = new Station(40360, 'Southport', ['Brn'], ['Southport'], false, undefined);
 
 	//Sox-35th
-	Stations[40190] = new Station(40190, '35th Street', ['Red'], ['U S Cellular Field', 'Sox Park', 'Thirty fifth', 'Thirty Fifth Street'], false, undefined);
+	Stations[40190] = new Station(40190, '35th Street', ['Red'], ['U S Cellular Field', 'Sox Park', 'Thirty fifth', 'Thirty Fifth Street', '35th'], false, undefined);
 
 	//State/Lake
 	Stations[40260] = new Station(40260, 'State and Lake', ['Pink', 'Brn', 'P', 'G', 'Org'], ['State and Lake', 'Lake and State'], false, undefined);
