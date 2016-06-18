@@ -458,33 +458,33 @@ function processTrainArrivals(etaArray, destination, destinationCode, lineCode, 
 function createStringResponse(trainList) {
     var stringResponse = "";
     if (trainList.length === 0) {} else {
-        for (var i = 0; i < trainList.length; i++)
-        {
-          var miunteVerbiage = "minutes";
-          if (trainList[i].ArrivalTime === 1) {
-              miunteVerbiage = "minute";
-          }
-          if (i === 0) {
-              stringResponse = stringResponse + "The next " + getAlexaFriendlyDestination(trainList[i].Destination) + " bound " + getLineName(trainList[i].line) + " train will arrive in " + trainList[i].ArrivalTime + " " + miunteVerbiage + ". ";
-          } else {
-            if (i === 1) {
-              if(trainList.length > 2)
-              {
-                stringResponse = stringResponse + "The following trains will arrive in " + trainList[i].ArrivalTime + " " + miunteVerbiage;
-              } else {
-                stringResponse = stringResponse + "The following train will arrive in " + trainList[i].ArrivalTime + " " + miunteVerbiage;
-              }
-            }
-
-            if(i > 1) {
-              stringResponse = stringResponse + trainList[i].ArrivalTime + " " + miunteVerbiage;
-            }
-
-            if(i === trainList.length - 1) {
-              stringResponse = stringResponse + ".";
+      for (var i = 0; i < trainList.length; i++) {
+        var miunteVerbiage = "minutes";
+        if (trainList[i].ArrivalTime === 1) {
+            miunteVerbiage = "minute";
+        }
+        if (i === 0) {
+            if(trainList[i].Destination === "See train") {
+              stringResponse = stringResponse + "The next " + getLineName(trainList[i].line) + " train will arrive in " + trainList[i].ArrivalTime + " " + miunteVerbiage + ". ";
             } else {
-              stringResponse = stringResponse + ", ";
+              stringResponse = stringResponse + "The next " + getAlexaFriendlyDestination(trainList[i].Destination) + " bound " + getLineName(trainList[i].line) + " train will arrive in " + trainList[i].ArrivalTime + " " + miunteVerbiage + ". ";
             }
+        } else {
+          if (i === 1) {
+            if(trainList.length > 2) {
+              stringResponse = stringResponse + "The following trains will arrive in " + trainList[i].ArrivalTime + " " + miunteVerbiage + ", ";
+            } else {
+              stringResponse = stringResponse + "The following train will arrive in " + trainList[i].ArrivalTime + " " + miunteVerbiage + ". ";
+            }
+          }
+
+          if(i > 1) {
+            if(i === trainList.length - 1) {
+              stringResponse = stringResponse + "and " + trainList[i].ArrivalTime + " " + miunteVerbiage + ".";
+            } else {
+              stringResponse = stringResponse + trainList[i].ArrivalTime + " " + miunteVerbiage + ", ";
+            }
+          }
         }
       }
     }
@@ -683,15 +683,15 @@ function validateRequest(station, line, destination) {
 function getAlexaFriendlyDestination(destination) {
     switch (destination.toString().toUpperCase()) {
         case "95TH/DAN RYAN":
-            return "Ninety Fifth and the Dan Ryan"
+          return "Ninety Fifth and the Dan Ryan"
         case "ASHLAND/63RD":
-            return "Ashland and sixty third"
+          return "Ashland and sixty third"
         case "HARLEM/LAKE":
-            return "Harlem and Lake"
+          return "Harlem and Lake"
         case "54TH/CERMAK":
-            return "54th and Cermak"
+          return "54th and Cermak"
         default:
-            return destination;
+          return destination;
     }
 }
 
