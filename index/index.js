@@ -1,10 +1,8 @@
 var aws = require('aws-sdk');
-var http = require('http');
-var parse = require('xml2js').parseString;
-var moment = require('moment-timezone');
 var dynamodb = new aws.DynamoDB();
 var AlexaSkill = require('./AlexaSkill');
 var StationLookup = require('./StationLookup');
+var CTATrainApi = require('./CTATrainApi');
 
 var APP_ID = 'amzn1.echo-sdk-ams.app.01d38e0e-785e-48b7-a7a6-8095e124f93d';
 
@@ -28,36 +26,39 @@ TrainTrackerSkill.prototype.constructor = TrainTrackerSkill;
 
 
 TrainTrackerSkill.prototype.intentHandlers = {
-    "SetHomeStation": function(intent, session, response) {
-        handleSetHomeStationIntent(intent, session, response);
-    },
-    "GetTrain": function(intent, session, response) {
-        handleGetTrainIntent(intent, session, response);
-    },
-    "SetHomeStationByName": function(intent, session, response) {
-        handleSetHomeStationByNameIntent(intent, session, response);
-    },
-    "GetHomeStation": function(intent, session, response) {
-        handleGetHomeStation(intent, session, response);
-    },
-    "SetHomeStationLineReprompt": function(intent, session, response) {
-        handleSetHomeStationLineReprompt(intent, session, response);
-    },
-    "AMAZON.HelpIntent": function(intent, session, response) {
+	"SetHomeStation": function(intent, session, response) {
+		handleSetHomeStationIntent(intent, session, response);
+	},
+	"GetTrain": function(intent, session, response) {
+		handleGetTrainIntent(intent, session, response);
+	},
+	"SetHomeStationByName": function(intent, session, response) {
+		handleSetHomeStationByNameIntent(intent, session, response);
+	},
+	"GetHomeStation": function(intent, session, response) {
+		handleGetHomeStation(intent, session, response);
+	},
+	"SetHomeStationLineReprompt": function(intent, session, response) {
+		handleLineReprompt(intent, session, response);
+	},
+	"AMAZON.HelpIntent": function(intent, session, response) {
 
-    },
+	},
 
-    "AMAZON.StopIntent": function(intent, session, response) {
+	"AMAZON.StopIntent": function(intent, session, response) {
 
-    },
+	},
 
-    "AMAZON.CancelIntent": function(intent, session, response) {
+	"AMAZON.CancelIntent": function(intent, session, response) {
 
-    }
+	}
 };
 
 //Addison - 41440
 //Belmont - 41320
+
+
+//--------------------------INTENTS--------------------------------------------
 
 /*
  *  SetHomeStation Intent
@@ -113,74 +114,49 @@ function handleSetHomeStationIntent(intent, session, alexa) {
  *  Intent for setting a user's home station and line using the station's name.
  */
 function handleSetHomeStationByNameIntent(intent, session, alexa) {
+	var homeStation = intent.slots.Station.value;
+	line = intent.slots.Line;
+	userId = getUserId(session);
+	var lineCode = getLineCode(line.value);
+	console.log('HomeStation - ' + homeStation + ' | Line - ' + lineCode);
 
+	var matchingStations = StationLookup.FindStations(homeStation, lineCode);
 
-    var homeStation = intent.slots.Station.value;
-    line = intent.slots.Line;
-    userId = getUserId(session);
-    var lineCode = getLineCode(line.value);
-    console.log('HomeStation - ' + homeStation + ' | Line - ' + lineCode);
+	var matchingStation;
+	if (matchingStations.length === 0) {
+		var cardText = 'Could not find the station you were looking for: ' + homeStation;
+		var speechText = "Hmm... I couldn't find a station by that name.  Please try again.";
+		var speechOutput = {
+			speech: speechText,
+			type: AlexaSkill.speechOutputType.PLAIN_TEXT
+		};
+		console.log('No stations found - ' + homeStation);
+		alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
+		return;
+	} else if (matchingStations.length > 1) {
+		//Check for line designation
+		//Alexa - more then one stop found
+		session.attributes.matchingStations = matchingStations;
 
-    if (!homeStation) {
-        var cardText = "Could not hear your home station.  Please try again";
-        var speechText = "I couldn't hear your home station.  Please try again.";
+		var cardText = '';
+		speechText = '';
+		repromptText = '';
+		//Pick a line
+		if (!lineCode) {
+			pickLineResponse(session, alexa);
+			return;
+		} else //Only case this is hit is with blue line for Harlem and Western stations
+		{
+			blueMatchingNamesResponse(session, alexa);
+			return;
+		}
+	} else {
+		matchingStation = matchingStations[0];
+	}
 
-        alexa.tellWithCard(speechText, "CTA Train Tracker", cardText);
-    }
-
-    var matchingStations = StationLookup.FindStations(homeStation, lineCode);
-
-    var matchingStation;
-    if (matchingStations.length === 0) {
-        var cardText = 'Could not find the station you were looking for: ' + homeStation;
-        var speechText = "Hmm... I couldn't find a station by that name.  Please try again.";
-        var speechOutput = {
-            speech: speechText,
-            type: AlexaSkill.speechOutputType.PLAIN_TEXT
-        };
-        console.log('No stations found - ' + homeStation);
-        alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
-        return;
-    } else if (matchingStations.length > 1) {
-        //Check for line designation
-        //Alexa - more then one stop found
-        session.attributes.matchingStations = matchingStations;
-
-        var cardText = '';
-        speechText = '';
-        repromptText = '';
-        //Pick a line
-        if (!lineCode) {
-            session.attributes.sessionType = 'PickLine';
-            var cardText = 'Found more then one station!  Please specify a line.  Example: Blue-Line';
-            var speechText = 'I found more then one station with that name.  What train line is at this stop?';
-            var repromptText = 'You can respond with the color of the line for this stop.  Example: Blue-Line';
-        } else //Only case this is hit is with blue line for Harlem and Western stations
-        {
-            session.attributes.sessionType = 'BlueMatching';
-            var cardText = "That line has more then one station with that name.  Is this station closer to O'Hare or Forst Park?";
-            var speechText = "That line has more then one station with that name.  Is this station closer to O'Hare or Forst Park?";
-            var repromptText = "You can respond O'Hare or Forest Park";
-        }
-
-        var speechOutput = {
-            speech: speechText,
-            type: AlexaSkill.speechOutputType.PLAIN_TEXT
-        };
-        var repromptOutput = {
-            speech: repromptText,
-            type: AlexaSkill.speechOutputType.PLAIN_TEXT
-        };
-
-        alexa.askWithCard(speechOutput, repromptOutput, "CTA Train Tracker", cardText);
-        return;
-    } else {
-        matchingStation = matchingStations[0];
-    }
-
-    putUserProfile(userId, matchingStation.stationId, lineCode, alexa, function(response) {
-        setHomeStationResponse(response, matchingStation, lineCode, alexa);
-    });
+	putUserProfile(userId, matchingStation.stationId, lineCode, alexa, function(response) {
+		setHomeStationResponse(response, matchingStation, lineCode, alexa);
+	});
 }
 
 /*
@@ -188,143 +164,58 @@ function handleSetHomeStationByNameIntent(intent, session, alexa) {
  *  Intent for settings a user's home station and line using the station's name.
  */
 function handleGetTrainIntent(intent, session, alexa) {
+	var userId = getUserId(session);
 
-    var userId = getUserId(session);
+	getUserProfile(userId, function() {
+		errorHappenedResponse(alexa)
+	}, function(data) {
+		var profile;
+		console.log(JSON.stringify(data));
+		if (data.Item && data.Item.HomeStation.S) {
+			profile = data.Item;
+		} else {
+			var cardText = "Home Location Not Set";
+			var speechText = "Please set home station by saying: Set my home station to station name.  Example: Set my home station to Washington and Wells";
+			var speechOutput = {
+				speech: speechText,
+				type: AlexaSkill.speechOutputType.PLAIN_TEXT
+			};
+			alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
+			return;
+		}
 
-    getUserProfile(userId, function() {
-        errorHappenedResponse(alexa)
-    }, function(data) {
-        var profile;
-        console.log(JSON.stringify(data));
-        if (data.Item && data.Item.HomeStation.S) {
-            profile = data.Item;
-        } else {
-            var cardText = "Home Location Not Set";
-            var speechText = "Please set home station by saying: Set my home station to station name.  Example: Set my home station to Washington and Wells";
-            var speechOutput = {
-                speech: speechText,
-                type: AlexaSkill.speechOutputType.PLAIN_TEXT
-            };
-            alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
-            return;
-        }
+		var destination = intent.slots.Destination.value;
+		var lineCode;
+		var line;
+		if (intent.slots.Line.value) {
+			line = intent.slots.Line.value;
+			lineCode = getLineCode(line);
+		} else if (profile.Line) {
+			lineCode = profile.Line.S;
+		}
 
-        var path = '/api/1.0/ttarrivals.aspx?key=4bee6b7246d64327a003527128fd0da3&mapid=' + profile.HomeStation.S;
-        var lineCode = '';
-        if (intent.slots.Line.value) {
-            lineCode = getLineCode(intent.slots.Line.value);
-            path = path + '&rt=' + lineCode;
-        } else if (profile.Line) {
-            lineCode = profile.Line.S;
-            path = path + '&rt=' + lineCode;
-        }
+		if (!lineCode) {
+			session.attributes.UserProfile = profile;
+			session.attributes.Destination = destination;
+			noDesignatedLineResponse(session, alexa, !line);
+			return;
+		}
 
-        //TODO: Ask what line
+		if (!destination) {
+			var cardText = "Destination could not be determined.  Make sure you use the line's terminal stations when declaring a destination.";
+			var speechText = "Hmm...  I couldn't determine the destination.  Please try again.";
+			var speechOutput = {
+				speech: speechText,
+				type: AlexaSkill.speechOutputType.PLAIN_TEXT
+			};
+			alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
+			return;
+		}
 
-        var destination = intent.slots.Destination.value;
-
-        if (!destination) {
-            var cardText = "Destination could not be determined.  Make sure you use the line's terminal stations when declaring a destination.";
-            var speechText = "Hmm...  I couldn't determine the destination.  Please try again.";
-            var speechOutput = {
-                speech: speechText,
-                type: AlexaSkill.speechOutputType.PLAIN_TEXT
-            };
-            alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
-            return;
-        }
-
-        var destinationCode = validateRequest(parseInt(profile.HomeStation.S), lineCode, destination);
-
-        if (destinationCode === undefined) {
-            if (destination.toUpperCase() === 'IN') {
-                destination = 'Inbound';
-            } else if (destination.toUpperCase === 'OUT') {
-                destination = 'Outbound';
-            }
-
-            var lineName = getLineName(lineCode);
-            var cardText = destination + " is an invalid " + lineName + " destination.";
-            var speechText = destination + " is an invalid " + lineName + " destination.  Please use " + getLineDestinationsString(lineCode) + ' as destinations for ' + lineName + ' trains.';
-
-            var speechOutput = {
-                speech: speechText,
-                type: AlexaSkill.speechOutputType.PLAIN_TEXT
-            };
-            alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
-            return;
-        } else if (destinationCode === null) {
-            var lineName = getLineName(lineCode);
-            var cardText = 'The ' + lineName + ' does not run on your designated home station.';
-            var speechText = 'The ' + lineName + ' does not run on your designated home station.';
-
-            var speechOutput = {
-                speech: speechText,
-                type: AlexaSkill.speechOutputType.PLAIN_TEXT
-            };
-
-            alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
-            return;
-        }
-
-        console.log('Destination - ' + destination + ' Code - ' + destinationCode);
-
-        console.log(JSON.stringify(profile));
-        var options = {
-            host: 'lapi.transitchicago.com',
-            port: 80,
-            path: path,
-            method: 'GET'
-        };
-
-        console.log(JSON.stringify(options));
-
-        console.log('Making Request...');
-
-        getHTTPResponse(options, function(body) {
-            console.log('BODY: ' + body);
-
-            parse(body, function(err, result) {
-                if (err != null) {
-                    console.log('Failed to parse CTA response - ' + err);
-                    errorHappenedResponse(alexa);
-                } else {
-                    console.log('CTA response - ' + result.ctatt);
-                    if (result.ctatt.errCd[0] != '0') {
-                        if (result.ctatt.errCd[0] === '103') {
-                            var cardText = 'Invalid home station.  Please reset your Home station.';
-                            var speechText = 'Invalid home station.  Please reset your Home station.';
-
-                            var speechOutput = {
-                                speech: speechText,
-                                type: AlexaSkill.speechOutputType.PLAIN_TEXT
-                            };
-
-                            alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
-                        }
-                        errorHappenedResponse(alexa);
-                    } else {
-                        if (typeof result === 'undefined' || typeof result.ctatt.eta === 'undefined') {
-                            noTrainsResponse(intent.slots.Destination.value, lineCode, alexa);
-                            return;
-                        }
-
-                        var trainList = processTrainArrivals(result.ctatt.eta, intent.slots.Destination.value, destinationCode, lineCode, alexa);
-
-                        if (trainList.length === 0) {
-                            noTrainsResponse(destination, lineCode, alexa);
-                        }
-
-                        var stringResponse = createStringResponse(trainList);
-                        console.log(stringResponse);
-
-                        alexa.tell(stringResponse);
-                    }
-                }
-            });
-        });
-    });
+		getTrains(profile.HomeStation.S, destination, lineCode, alexa);
+	});
 }
+
 
 /*
  * GetHomeStation Intent
@@ -365,69 +256,141 @@ function handleGetHomeStation(intent, session, alexa) {
 
 /*
  * SetHomeStationLineRepropt Intent
- * Intent for asking the user for a line to specify which 
+ * Intent for asking the user for a line to specify which
  * station they want to set for a home station.
  */
-function handleSetHomeStationLineReprompt(intent, session, alexa) {
-    if (session.new) {
-        var speechText = "That doesn't seem to be a valid command right now.  Please try again.";
+function handleLineReprompt(intent, session, alexa) {
+	if (session.new) {
+		var cardText = "To set your home station say 'Aelxa, tell CTA to set my home station to [station name]' or to get train arrivals say 'Alexa ask CTA when is the next [Destionation] bound [Line Color] line train?'";
+		var speechText = "I didn't quite catch that.  Please try again.";
+		var speechOutput = {
+			speech: speechText,
+			type: AlexaSkill.speechOutputType.PLAIN_TEXT
+		};
+		alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
+		return;
+	}
+	var sessionType = session.attributes.sessionType;
+	userId = getUserId(session);
+	previousMatchingStations = session.attributes.matchingStations;
+	line = intent.slots.LineOrBlueSide.value;
 
-        alexa.tell(speechText);
-    }
-    var sessionType = session.attributes.sessionType;
-    userId = getUserId(session);
-    previousMatchingStations = session.attributes.matchingStations;
-    if (sessionType === 'PickLine') {
-        var line = intent.slots.LineOrBlueSide;
+	if (sessionType === 'PickLineMultiple') {
+		console.log('pick line multiple');
+		if (!line) {
+			noDesignatedLineResponse(session, alexa, false);
+			return;
+		}
 
-        if (!line.value) {
-            //Some error here
-        }
+		var lineCode = getLineCode(line);
+		if (!lineCode) {
+			noDesignatedLineResponse(session, alexa, false);
+			return;
+		}
 
-        var lineCode = getLineCode(line.value);
+		processHomeStationLineReprompt(userId, previousMatchingStations, lineCode, session, alexa)
+	} else if (sessionType === 'BlueMatching') {
+		console.log('Blue Matching');
+		processHomeStationBlueReprompt(userId, previousMatchingStations, line, alexa);
+	} else if (sessionType === 'PickLine') {
+		var stationId = session.attributes.UserProfile.HomeStation.S;
+		var destination = session.attributes.Destination;
+		var lineCode = getLineCode(line);
+		if (!lineCode) {
+			noDesignatedLineResponse(session, alexa, false);
+			return;
+		}
+		getTrains(stationId, destination, lineCode, alexa);
+	}
+}
 
-        if (!lineCode) {
-            //Some error here
-        }
 
-        processHomeStationLineReprompt(userId, previousMatchingStations, lineCode, alexa)
-    } else if (sessionType === 'BlueMatching') {
-        var blueSide = intent.slots.LineOrBlueSide.value;
-        processHomeStationBlueReprompt(userId, previousMatchingStations, blueSide, alexa);
-    }
+//------------------------------Helpers--------------------------------------
+
+function getTrains(stationId, destination, lineCode, alexa) {
+	var destinationCode = validateRequest(parseInt(stationId), lineCode, destination);
+
+	if (destinationCode === undefined) {
+		if (destination.toUpperCase() === 'IN') {
+			destination = 'Inbound';
+		} else if (destination.toUpperCase === 'OUT') {
+			destination = 'Outbound';
+		}
+
+		var lineName = getLineName(lineCode);
+		var cardText = destination + " is an invalid " + lineName + " destination.";
+		var speechText = destination + " is an invalid " + lineName + " destination.  Please use " + getLineDestinationsString(lineCode) + ' as destinations for ' + lineName + ' trains.';
+
+		var speechOutput = {
+			speech: speechText,
+			type: AlexaSkill.speechOutputType.PLAIN_TEXT
+		};
+		alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
+		return;
+	} else if (destinationCode === null) {
+		var lineName = getLineName(lineCode);
+		var cardText = 'The ' + lineName + ' does not run on your designated home station.';
+		var speechText = 'The ' + lineName + ' does not run on your designated home station.';
+
+		var speechOutput = {
+			speech: speechText,
+			type: AlexaSkill.speechOutputType.PLAIN_TEXT
+		};
+
+		alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
+		return;
+	}
+
+	console.log('Destination - ' + destination + ' Code - ' + destinationCode);
+
+	CTATrainApi.GetTrains(stationId, lineCode, destinationCode, function() {
+		errorHappenedResponse(alexa);
+	}, function(trainList) {
+
+		if (trainList.length === 0) {
+			noTrainsResponse(destination, lineCode, alexa);
+		}
+
+		var stringResponse = createStringResponse(trainList);
+		console.log(stringResponse);
+
+		alexa.tell(stringResponse);
+	});
 }
 
 /*
- * Processing method for handling a user specifying a train line when prompted 
+ * Processing method for handling a user specifying a train line when prompted
  */
-function processHomeStationLineReprompt(userId, previousMatchingStations, lineCode, alexa) {
-    var matchingStations = [];
-    for (var key in previousMatchingStations) {
-        var stationId = previousMatchingStations[key].stationId;
+function processHomeStationLineReprompt(userId, previousMatchingStations, lineCode, session, alexa) {
+	var matchingStations = [];
+	console.log('process home station line reprompt');
+	for (var key in previousMatchingStations) {
+		var stationId = previousMatchingStations[key].stationId;
 
-        if (StationLookup.Stations[stationId].hasLine(lineCode)) {
-            matchingStations.push(previousMatchingStations[key]);
-        }
-    }
+		if (StationLookup.Stations[stationId].hasLine(lineCode)) {
+			matchingStations.push(previousMatchingStations[key]);
+		}
+	}
 
-    if (matchingStations.length > 1) {
-        //TODO: Something here
-    } else if (matchingStations.length === 0) {
-        var lineName = getLineName(lineCode);
-        cardText = 'The ' + lineName + ' does not run at this station.';
-        speechText = 'The ' + lineName + ' does not run at this station.  Please try setting your home station again.';
-        var speechOutput = {
-            speech: speechText,
-            type: AlexaSkill.speechOutputType.PLAIN_TEXT
-        };
-        alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
-    } else {
-        var matchingStation = matchingStations[0];
+	if (matchingStations.length > 1) {
+		blueMatchingNamesResponse(session, alexa);
+	} else if (matchingStations.length === 0) {
+		var lineName = getLineName(lineCode);
+		cardText = 'The ' + lineName + ' does not run at this station.';
+		speechText = 'The ' + lineName + ' does not run at this station.  Please try setting your home station again.';
+		var speechOutput = {
+			speech: speechText,
+			type: AlexaSkill.speechOutputType.PLAIN_TEXT
+		};
+		alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
+	} else {
+		console.log('1 found');
+		var matchingStation = matchingStations[0];
 
-        putUserProfile(userId, matchingStation.stationId, lineCode, alexa, function(response) {
-            setHomeStationResponse(response, matchingStation, lineCode, alexa);
-        });
-    }
+		putUserProfile(userId, matchingStation.stationId, lineCode, alexa, function(response) {
+			setHomeStationResponse(response, matchingStation, lineCode, alexa);
+		});
+	}
 }
 
 /*
@@ -435,20 +398,22 @@ function processHomeStationLineReprompt(userId, previousMatchingStations, lineCo
  * Method only used for multiple stations with the same name on the blue line (Harlem, Western)
  */
 function processHomeStationBlueReprompt(userId, previousMatchingStations, blueSide, alexa) {
-    //Handles O'Hare or Forest Park
-    for (var key in previousMatchingStations) {
-        var station = previousMatchingStations[key];
+	//Handles O'Hare or Forest Park
+	for (var key in previousMatchingStations) {
 
-        if (station.blueLineSide === blueSide) {
-            putUserProfile(userId, station.stationId, 'Blue', alexa, function(response) {
-                setHomeStationResponse(response, station, 'Blue', alexa);
-            });
-        }
-    }
+		var station = previousMatchingStations[key];
+		console.log(station.blueLineSide +'===' + blueSide);
+
+		if (station.blueLineSide && station.blueLineSide.toUpperCase() === blueSide.toUpperCase()) {
+			putUserProfile(userId, station.stationId, 'Blue', alexa, function(response) {
+				setHomeStationResponse(response, station, 'Blue', alexa);
+			});
+		}
+	}
 }
 
 /*
- * 
+ *
  */
 function processTrainArrivals(etaArray, destination, destinationCode, lineCode, callback) {
     console.log(etaArray);
@@ -492,26 +457,36 @@ function processTrainArrivals(etaArray, destination, destinationCode, lineCode, 
  */
 function createStringResponse(trainList) {
     var stringResponse = "";
-
     if (trainList.length === 0) {} else {
-        for (var i = 0; i < trainList.length; i++) {
-            if (i >= 2) {
-                break;
-            }
-
-            var miunteVerbiage = "minutes";
-            if (trainList[i].ArrivalTime === 1) {
-                miunteVerbiage = "minute";
-            }
-
-            if (i === 0) {
-                stringResponse = stringResponse + "The next " + getAlexaFriendlyDestination(trainList[i].Destination) + " bound " + getLineName(trainList[i].line) + " train will arrive in " + trainList[i].ArrivalTime + " " + miunteVerbiage + ". ";
-            }
-
+        for (var i = 0; i < trainList.length; i++)
+        {
+          var miunteVerbiage = "minutes";
+          if (trainList[i].ArrivalTime === 1) {
+              miunteVerbiage = "minute";
+          }
+          if (i === 0) {
+              stringResponse = stringResponse + "The next " + getAlexaFriendlyDestination(trainList[i].Destination) + " bound " + getLineName(trainList[i].line) + " train will arrive in " + trainList[i].ArrivalTime + " " + miunteVerbiage + ". ";
+          } else {
             if (i === 1) {
-                stringResponse = stringResponse + "The following train will arrive in " + trainList[i].ArrivalTime + " " + miunteVerbiage + ". ";
+              if(trainList.length > 2)
+              {
+                stringResponse = stringResponse + "The following trains will arrive in " + trainList[i].ArrivalTime + " " + miunteVerbiage;
+              } else {
+                stringResponse = stringResponse + "The following train will arrive in " + trainList[i].ArrivalTime + " " + miunteVerbiage;
+              }
+            }
+
+            if(i > 1) {
+              stringResponse = stringResponse + trainList[i].ArrivalTime + " " + miunteVerbiage;
+            }
+
+            if(i === trainList.length - 1) {
+              stringResponse = stringResponse + ".";
+            } else {
+              stringResponse = stringResponse + ", ";
             }
         }
+      }
     }
 
     console.log(stringResponse);
@@ -519,6 +494,7 @@ function createStringResponse(trainList) {
 }
 
 /*
+<<<<<<< HEAD
  *
  */
 function noTrainsResponse(destination, lineCode, alexa) {
@@ -729,56 +705,111 @@ function onSessionEnded(sessionEndedRequest, session) {
     // Add cleanup logic here
 }
 
+
+//--------------------RESPONSES----------------------------
+
+/*
+ * Sends response for no trains found at station
+ */
+function noTrainsResponse(destination, lineCode, alexa) {
+	var cardText = 'No trains scheduled for the next 20 minutes.'
+	var speechText = 'There are no ' + getLineName(lineCode) + ' ' + destination + ' bound trains scheduled at this stop for the next 20 minutes.';
+	var speechOutput = {
+		speech: speechText,
+		type: AlexaSkill.speechOutputType.PLAIN_TEXT
+	};
+
+	alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
+}
+
+/*
+ * Sends response for user to pick a line if home station couldn't be determined.
+ */
+function pickLineResponse(session, alexa) {
+	session.attributes.sessionType = 'PickLineMultiple'
+	var cardText = 'Found more then one station!  Please specify a line.  Example: Blue-Line';
+	var speechText = 'I found more then one station with that name.  What train line is at this stop?';
+	var repromptText = 'You can respond with the color of the line for this stop.  Example: Blue-Line';
+
+	var speechOutput = {
+		speech: speechText,
+		type: AlexaSkill.speechOutputType.PLAIN_TEXT
+	};
+	var repromptOutput = {
+		speech: repromptText,
+		type: AlexaSkill.speechOutputType.PLAIN_TEXT
+	};
+
+	alexa.askWithCard(speechOutput, repromptOutput, "CTA Train Tracker", cardText);
+}
+
+function noDesignatedLineResponse(session, alexa, undefinedLine) {
+	session.attributes.sessionType = 'PickLine'
+	if (undefinedLine) {
+		var speechText = 'What line would you like to check trains for?';
+	} else {
+		var speechText = "Hmm...  I didn't quite understand what you said.  What line would you like to check trains for?";
+	}
+	var cardText = 'What line would you like to check trains for?  (Red, Blue, Brown etc...)';
+	var repromptText = 'You can respond with the color of the line you wish to check trains for.  Example: Blue-Line';
+	var speechOutput = {
+		speech: speechText,
+		type: AlexaSkill.speechOutputType.PLAIN_TEXT
+	};
+	var repromptOutput = {
+		speech: repromptText,
+		type: AlexaSkill.speechOutputType.PLAIN_TEXT
+	};
+
+	alexa.askWithCard(speechOutput, repromptOutput, "CTA Train Tracker", cardText);
+}
+
+function blueMatchingNamesResponse(session, alexa) {
+	session.attributes.sessionType = 'BlueMatching';
+	var cardText = "That line has more then one station with that name.  Is this station closer to O'Hare or Forst Park?";
+	var speechText = "That line has more then one station with that name.  Is this station closer to O'Hare or Forst Park?";
+	var repromptText = "You can respond O'Hare or Forest Park";
+
+	var speechOutput = {
+		speech: speechText,
+		type: AlexaSkill.speechOutputType.PLAIN_TEXT
+	};
+	var repromptOutput = {
+		speech: repromptText,
+		type: AlexaSkill.speechOutputType.PLAIN_TEXT
+	};
+
+	alexa.askWithCard(speechOutput, repromptOutput, "CTA Train Tracker", cardText);
+}
+
+/*
+ * Sends response after setting a user's home station
+ */
+function setHomeStationResponse(response, matchingStation, lineCode, alexa) {
+
+	if (lineCode) {
+		var lineName = getLineName(lineCode);
+		var cardText = 'Home station has been set to ' + matchingStation.alexaFriendlyName + ' ' + lineName + '.';
+		var speechText = 'Your home station has been set to ' + matchingStation.alexaFriendlyName + ' ' + lineName + '.';
+	} else {
+		var cardText = 'Home station has been set to ' + matchingStation.alexaFriendlyName + '.';
+		var speechText = 'Your home station has been set to ' + matchingStation.alexaFriendlyName + '.';
+	}
+
+	var speechOutput = {
+		speech: speechText,
+		type: AlexaSkill.speechOutputType.PLAIN_TEXT
+	};
+	console.log(JSON.stringify(response));
+	alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
+}
+
+/*
+ * Sends response after unexpected error happened
+ */
 function errorHappenedResponse(alexa) {
-    var cardText = "Something went wrong...  Please try again.";
-    var speechText = "Hmm...  Something seems to have gone wrong.  Please try again.";
+	var cardText = "Something went wrong...  Please try again.";
+	var speechText = "Hmm...  Something seems to have gone wrong.  Please try again.";
 
-    alexa.tellWithCard(speechText, "CTA Train Tracker", cardText);
-}
-
-function buildSpeechletResponse(title, output, repromptText, shouldEndSession) {
-    return {
-        outputSpeech: {
-            type: "PlainText",
-            text: output
-        },
-        card: {
-            type: "Simple",
-            title: "CTA Train " + title,
-            content: "CTA Train - " + output
-        },
-        reprompt: {
-            outputSpeech: {
-                type: "PlainText",
-                text: repromptText
-            }
-        },
-        shouldEndSession: shouldEndSession
-    };
-}
-
-function buildResponse(sessionAttributes, speechletResponse) {
-    return {
-        version: "1.0",
-        sessionAttributes: sessionAttributes,
-        response: speechletResponse
-    };
-}
-
-function getHTTPResponse(options, callback) {
-    http.request(options, function(response) {
-        response.setEncoding('utf8');
-        var body = '';
-        response.on('data', function(chunk) {
-            body += chunk;
-        });
-
-        response.on('end', function() {
-            console.log(body);
-            callback(body);
-        });
-
-    }).end();
-
-
+	alexa.tellWithCard(speechText, "CTA Train Tracker", cardText);
 }

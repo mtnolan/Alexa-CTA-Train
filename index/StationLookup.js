@@ -208,7 +208,7 @@ function StationLookup() {
 	Stations[41130] = new Station(41130, 'Halsted', ['Org'], ['Halsted'], false, undefined);
 
 	//Harlem (Blue Line-Forest Park Branch)
-	Stations[40980] = new Station(40980, 'Harlem', ['Blue'], ['Harlem'], false, 'Forst Park');
+	Stations[40980] = new Station(40980, 'Harlem', ['Blue'], ['Harlem'], false, 'Forest Park');
 
 	//Harlem (Green Line)
 	Stations[40020] = new Station(40020, 'Harlem', ['G'], ['Harlem'], false, undefined);
