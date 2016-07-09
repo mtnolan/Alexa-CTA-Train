@@ -42,7 +42,7 @@ TrainTrackerSkill.prototype.intentHandlers = {
 		handleLineReprompt(intent, session, response);
 	},
 	"AMAZON.HelpIntent": function(intent, session, response) {
-
+    helpResponse(response);
 	},
 
 	"AMAZON.StopIntent": function(intent, session, response) {
@@ -65,11 +65,12 @@ TrainTrackerSkill.prototype.intentHandlers = {
  *  Intent for setting a user's home station and line using the station's ID.
  */
 function handleSetHomeStationIntent(intent, session, alexa) {
-    var homeStation = intent.slots.StopId;
+    var homeStation = intent.slots.StopId.value;
     line = intent.slots.Line;
     userId = getUserId(session);
 
     if (!homeStation) {
+        console.log('no station');
         var cardText = "Could not find station that station.";
         var speechText = "I could not find a station.  Please try again.";
 
@@ -79,33 +80,17 @@ function handleSetHomeStationIntent(intent, session, alexa) {
     var matchingStation = StationLookup.Stations[homeStation];
 
     if (!matchingStation) {
-        console.log('matching station not found for id - ' + homeStation);
-        var cardText = "Could not find station " + homeStation + '.';
-        var speechText = "I could not find a station with that I. D.  Please try again, or set your station by name.";
+      console.log('matching station not found for id - ' + homeStation);
+      var cardText = "Could not find station " + homeStation + '.';
+      var speechText = "I could not find a station with that ID.  Please try again, or set your station by name.";
 
-        alexa.tellWithCard(speechText, "CTA Train Tracker", cardText);
+      alexa.tellWithCard(speechText, "CTA Train Tracker", cardText);
     }
 
     console.log('Matching station: ' + JSON.stringify(matchingStation));
 
-    var params = {
-        Key: {
-            UserId: {
-                S: userId
-            }
-        },
-        TableName: "CTAUser"
-    };
-
-    dynamodb.getItem(params, function(err, data) {
-        if (err) {
-            console.log('Failed to get user profile: ' + err);
-            errorHappenedResponse(alexa);
-        } else {
-            console.log("User - " + JSON.stringify(userId) + " HomeStation - " + JSON.stringify(homeStation) + ' Line - ' + JSON.stringify(line));
-
-        }
-
+    putUserProfile(userId, homeStation, line.value, alexa, function(response) {
+		    setHomeStationResponse(response, matchingStation, undefined, alexa);
     });
 }
 
@@ -119,6 +104,10 @@ function handleSetHomeStationByNameIntent(intent, session, alexa) {
 	userId = getUserId(session);
 	var lineCode = getLineCode(line.value);
 	console.log('HomeStation - ' + homeStation + ' | Line - ' + lineCode);
+
+  if(!homeStation) {
+    helpResponse(alexa);
+  }
 
 	var matchingStations = StationLookup.FindStations(homeStation, lineCode);
 
@@ -261,7 +250,7 @@ function handleGetHomeStation(intent, session, alexa) {
  */
 function handleLineReprompt(intent, session, alexa) {
 	if (session.new) {
-		var cardText = "To set your home station say 'Aelxa, tell CTA to set my home station to [station name]' or to get train arrivals say 'Alexa ask CTA when is the next [Destionation] bound [Line Color] line train?'";
+		var cardText = "To set your home station say 'Alexa, tell CTA to set my home station to [station name]' or to get train arrivals say 'Alexa ask CTA when is the next [Destionation] bound [Line Color] line train?'";
 		var speechText = "I didn't quite catch that.  Please try again.";
 		var speechOutput = {
 			speech: speechText,
@@ -494,7 +483,6 @@ function createStringResponse(trainList) {
 }
 
 /*
-<<<<<<< HEAD
  *
  */
 function noTrainsResponse(destination, lineCode, alexa) {
@@ -506,6 +494,16 @@ function noTrainsResponse(destination, lineCode, alexa) {
     };
 
     alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
+}
+
+function helpResponse(alexa) {
+  var cardText = "Wellcome to the CTA Alexa App!  To set your home station say 'Alexa, tell CTA to set my home station to [station name]' or to get train arrivals say 'Alexa ask CTA when is the next [Destionation] bound [Line Color] line train?'";
+  var speechText = "Welcome to the CTA Alexa App!  To set your home station say: Alexa, tell CTA to set my home station to, followed by your nearest station name.";
+  var speechOutput = {
+    speech: speechText,
+    type: AlexaSkill.speechOutputType.PLAIN_TEXT
+  };
+  alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
 }
 
 /*
@@ -565,7 +563,6 @@ function getLineName(lineCode) {
  * Converts Alexa lines to the API codes
  */
 function getLineCode(line) {
-
     console.log(JSON.stringify(line));
     if (!line) return undefined;
     switch (line.toString().toUpperCase()) {
