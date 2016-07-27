@@ -14,7 +14,6 @@ exports.handler = function(event, context) {
     skill.execute(event, context);
 };
 
-
 var TrainTrackerSkill = function() {
     AlexaSkill.call(this, APP_ID);
     StationLookup.call();
@@ -24,6 +23,10 @@ var TrainTrackerSkill = function() {
 TrainTrackerSkill.prototype = Object.create(AlexaSkill.prototype);
 TrainTrackerSkill.prototype.constructor = TrainTrackerSkill;
 
+TrainTrackerSkill.prototype.eventHandlers.onLaunch =
+  function(launchRequest, session, response) {
+    helpResponse(response);
+  };
 
 TrainTrackerSkill.prototype.intentHandlers = {
 	"SetHomeStation": function(intent, session, response) {
@@ -65,33 +68,33 @@ TrainTrackerSkill.prototype.intentHandlers = {
  *  Intent for setting a user's home station and line using the station's ID.
  */
 function handleSetHomeStationIntent(intent, session, alexa) {
-    var homeStation = intent.slots.StopId.value;
-    line = intent.slots.Line;
-    userId = getUserId(session);
+  var homeStation = intent.slots.StopId.value;
+  line = intent.slots.Line;
+  userId = getUserId(session);
 
-    if (!homeStation) {
-        console.log('no station');
-        var cardText = "Could not find station that station.";
-        var speechText = "I could not find a station.  Please try again.";
-
-        alexa.tellWithCard(speechText, "CTA Train Tracker", cardText);
-    }
-
-    var matchingStation = StationLookup.Stations[homeStation];
-
-    if (!matchingStation) {
-      console.log('matching station not found for id - ' + homeStation);
-      var cardText = "Could not find station " + homeStation + '.';
-      var speechText = "I could not find a station with that ID.  Please try again, or set your station by name.";
+  if (!homeStation) {
+      console.log('no station');
+      var cardText = "Could not find station that station.";
+      var speechText = "I could not find a station.  Please try again.";
 
       alexa.tellWithCard(speechText, "CTA Train Tracker", cardText);
-    }
+  }
 
-    console.log('Matching station: ' + JSON.stringify(matchingStation));
+  var matchingStation = StationLookup.Stations[homeStation];
 
-    putUserProfile(userId, homeStation, line.value, alexa, function(response) {
-		    setHomeStationResponse(response, matchingStation, undefined, alexa);
-    });
+  if (!matchingStation) {
+    console.log('matching station not found for id - ' + homeStation);
+    var cardText = "Could not find station " + homeStation + '.';
+    var speechText = "I could not find a station with that ID.  Please try again, or set your station by name.";
+
+    alexa.tellWithCard(speechText, "CTA Train Tracker", cardText);
+  }
+
+  console.log('Matching station: ' + JSON.stringify(matchingStation));
+
+  putUserProfile(userId, homeStation, line.value, alexa, function(response) {
+	    setHomeStationResponse(response, matchingStation, undefined, alexa);
+  });
 }
 
 /*
@@ -200,7 +203,6 @@ function handleGetTrainIntent(intent, session, alexa) {
 			alexa.tellWithCard(speechOutput, "CTA Train Tracker", cardText);
 			return;
 		}
-
 		getTrains(profile.HomeStation.S, destination, lineCode, alexa);
 	});
 }
